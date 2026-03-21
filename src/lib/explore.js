@@ -112,6 +112,18 @@ export async function forceRecompute(library) {
   return getCache();
 }
 
+// Refresh only the taste profile, leaving recs/reserve untouched
+export async function refreshTasteProfile(library) {
+  if (library.length < 2) return getCache();
+  const profile = await getTasteProfile(library);
+  const cache = getCache();
+  if (cache) {
+    cache.profile = profile;
+    setCache(cache);
+  }
+  return getCache();
+}
+
 // Pull next book from reserve, update cache, dispatch update.
 // If reserve empty, remove card and trigger background replenishment.
 export function replaceFromReserve(library, removedRec) {

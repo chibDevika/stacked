@@ -5,7 +5,7 @@ import { addBook, getLibrary } from "../lib/storage.js";
 import {
   getExploreCacheRaw,
   replaceFromReserve,
-  forceRecompute,
+  refreshTasteProfile,
 } from "../lib/explore.js";
 import BookCover from "../components/BookCover.jsx";
 import AddBookModal from "../components/AddBookModal.jsx";
@@ -290,7 +290,7 @@ export default function Search() {
   async function handleRefreshProfile() {
     if (profileRefreshing || library.length < 2) return;
     setProfileRefreshing(true);
-    const newCache = await forceRecompute(library);
+    const newCache = await refreshTasteProfile(library);
     setExploreData(newCache);
     setProfileRefreshing(false);
   }
