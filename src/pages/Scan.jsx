@@ -1,76 +1,36 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Scan() {
   const fileInputRef = useRef(null);
-  const [mode, setMode] = useState("shelf");
   const navigate = useNavigate();
 
   function handleFileChange(e) {
     const file = e.target.files[0];
     if (!file) return;
-
-    // Reset so the same file can be selected again (fixes double-upload bug)
     e.target.value = "";
-
     const reader = new FileReader();
     reader.onload = (ev) => {
       const base64 = ev.target.result.split(",")[1];
       const mimeType = file.type;
-      navigate("/scan-processing", { state: { base64, mimeType, mode } });
+      navigate("/scan-processing", { state: { base64, mimeType } });
     };
     reader.readAsDataURL(file);
   }
 
-  function openCamera() {
-    fileInputRef.current?.click();
-  }
-
   return (
     <div className="min-h-screen bg-app flex flex-col">
-      {/* Header + mode pills */}
-      <div className="flex flex-col items-center pt-5 pb-6 px-4">
-        <p
-          style={{
-            fontFamily: '"DM Sans", sans-serif',
-            fontSize: 13,
-            fontStyle: "italic",
-            color: "var(--text-muted)",
-            marginBottom: 12,
-          }}
-        >
-          Photograph your shelf or a single book
-        </p>
-        <div className="flex gap-2">
-          {[
-            { key: "shelf", label: "Shelf" },
-            { key: "single", label: "Single Book" },
-          ].map((m) => (
-            <button
-              key={m.key}
-              onClick={() => setMode(m.key)}
-              className="px-4 py-1.5 rounded-full text-xs font-medium"
-              style={{
-                background:
-                  mode === m.key ? "var(--accent)" : "var(--surface-2)",
-                color: mode === m.key ? "#fff" : "var(--text-muted)",
-                border: "none",
-              }}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Upload zone */}
-      <div className="flex-1 flex items-center justify-center px-6">
+      <div
+        className="flex-1 flex items-center justify-center px-6"
+        style={{ paddingTop: 32 }}
+      >
         <div
           className="relative w-full cursor-pointer"
           style={{ maxWidth: 480, aspectRatio: "1 / 1" }}
-          onClick={openCamera}
+          onClick={() => fileInputRef.current?.click()}
         >
-          {/* Subtle dashed fill */}
+          {/* Dashed border */}
           <div
             className="absolute inset-0"
             style={{ border: "1px dashed rgba(239,159,39,0.25)" }}
@@ -108,13 +68,10 @@ export default function Scan() {
               Photograph your shelf
             </h2>
             <p className="text-muted text-sm text-center">
-              {mode === "single"
-                ? "Or select a single book"
-                : "Or a single book"}
+              Spines, covers, stacks — we'll figure it out
             </p>
           </div>
 
-          {/* Hidden file input — not clickable directly, triggered via ref */}
           <input
             ref={fileInputRef}
             type="file"

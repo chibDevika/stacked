@@ -66,6 +66,12 @@ function PageFlipLoader() {
   );
 }
 
+const STATUS_OPTIONS = [
+  { value: "want-to-read", label: "Want to Read" },
+  { value: "reading", label: "Reading" },
+  { value: "read", label: "Read" },
+];
+
 export default function ScanProcessing() {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -73,6 +79,7 @@ export default function ScanProcessing() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
   const [addState, setAddState] = useState("idle"); // idle | adding | done
+  const [selectedStatus, setSelectedStatus] = useState("read");
   const scanStarted = useRef(false);
 
   useEffect(() => {
@@ -102,8 +109,8 @@ export default function ScanProcessing() {
       .forEach((b) => {
         addBook({
           ...b,
-          status: "read",
-          yearRead: new Date().getFullYear(),
+          status: selectedStatus,
+          yearRead: selectedStatus === "read" ? new Date().getFullYear() : null,
         });
       });
     setAddState("done");
@@ -172,20 +179,52 @@ export default function ScanProcessing() {
       {done && books.some((b) => b.matched) && (
         <div
           className="fixed bottom-0 left-0 right-0 flex flex-col items-center"
-          style={{ padding: "12px 16px 16px", background: "var(--bg)" }}
+          style={{
+            padding: "12px 16px 20px",
+            background: "var(--bg)",
+            borderTop: "1px solid var(--border)",
+          }}
         >
-          <p
-            style={{
-              fontFamily: '"DM Sans", sans-serif',
-              fontSize: 12,
-              fontStyle: "italic",
-              color: "var(--text-hint)",
-              textAlign: "center",
-              marginBottom: 10,
-            }}
-          >
-            All books added as Read. Tap any book to change status.
-          </p>
+          {/* Status selector */}
+          {addState === "idle" && (
+            <div className="flex items-center gap-2 mb-3">
+              <span
+                style={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: 12,
+                  color: "var(--text-hint)",
+                  flexShrink: 0,
+                }}
+              >
+                Add as:
+              </span>
+              {STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSelectedStatus(opt.value)}
+                  style={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    padding: "4px 12px",
+                    borderRadius: 20,
+                    background:
+                      selectedStatus === opt.value
+                        ? "var(--accent)"
+                        : "var(--surface-2)",
+                    color:
+                      selectedStatus === opt.value
+                        ? "var(--bg)"
+                        : "var(--text-muted)",
+                    transition: "background 0.15s, color 0.15s",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <button
             onClick={handleAddAll}
             disabled={addState !== "idle"}
