@@ -108,6 +108,14 @@ function TopNav({ isDark, onToggleTheme }) {
   );
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 function BottomNav() {
   const location = useLocation();
   const hideNav = location.pathname.startsWith("/scan-processing");
@@ -247,6 +255,7 @@ function AppShell() {
 
   return (
     <div className="min-h-screen bg-app text-primary font-dm">
+      <ScrollToTop />
       <TopNav isDark={isDark} onToggleTheme={toggleTheme} />
       {/* Push all content below the 56px sticky navbar */}
       <div className="pt-14 pb-20">
