@@ -48,15 +48,6 @@ npm run dev
 
 Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com).
 
-## Deploying to Vercel
-
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-Set `VITE_GEMINI_API_KEY` in your Vercel project's environment variables.
-
 ## Design
 
 Dark, editorial, warm — independent bookshop at night. Book covers are the visual currency.
