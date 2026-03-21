@@ -3,6 +3,152 @@ import { useNavigate } from "react-router-dom";
 import { getLibrary, getNote } from "../lib/storage.js";
 import BookCover from "../components/BookCover.jsx";
 
+const COVER_SIZE = 80;
+const MAX_VISIBLE = 6;
+
+function MonthSection({ monthKey, books, navigate, isLast }) {
+  const [expanded, setExpanded] = useState(false);
+  const label = formatMonth(monthKey);
+  const visible = expanded ? books : books.slice(0, MAX_VISIBLE);
+  const overflow = books.length - MAX_VISIBLE;
+
+  return (
+    <div style={{ position: "relative", paddingLeft: 32 }}>
+      {/* Timeline dot */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 4,
+          width: 8,
+          height: 8,
+          borderRadius: "50%",
+          background: "var(--accent)",
+          transform: "translateX(-3.5px)",
+          zIndex: 1,
+        }}
+      />
+
+      {/* Month header */}
+      <div className="flex items-center gap-3 mb-3">
+        <span
+          className="font-playfair shrink-0"
+          style={{
+            fontSize: 16,
+            fontWeight: 500,
+            color: "var(--text-primary)",
+          }}
+        >
+          {label}
+        </span>
+        <span
+          style={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: 11,
+            color: "var(--text-hint)",
+            flexShrink: 0,
+          }}
+        >
+          · {books.length} {books.length === 1 ? "book" : "books"}
+        </span>
+        <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+      </div>
+
+      {/* Covers row */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+        {visible.map((book) => (
+          <BookTile key={book.id} book={book} navigate={navigate} />
+        ))}
+        {!expanded && overflow > 0 && (
+          <div
+            onClick={() => setExpanded(true)}
+            style={{
+              width: COVER_SIZE,
+              aspectRatio: "2/3",
+              borderRadius: 6,
+              background: "var(--surface-2)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            <span
+              className="font-playfair"
+              style={{
+                fontSize: 18,
+                color: "var(--accent-warm)",
+                lineHeight: 1,
+              }}
+            >
+              +{overflow}
+            </span>
+            <span
+              style={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: 9,
+                color: "var(--text-hint)",
+                marginTop: 4,
+              }}
+            >
+              more
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BookTile({ book, navigate }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      style={{ position: "relative", flexShrink: 0, textAlign: "center" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div
+        onClick={() => navigate(`/book/${book.id}`)}
+        style={{
+          width: COVER_SIZE,
+          aspectRatio: "2/3",
+          borderRadius: 6,
+          overflow: "hidden",
+          cursor: "pointer",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
+          transform: hovered ? "scale(1.05)" : "scale(1)",
+          transition: "transform 150ms ease",
+        }}
+      >
+        <BookCover book={book} className="w-full h-full" showDot={false} />
+      </div>
+      {hovered && (
+        <p
+          style={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: 10,
+            color: "var(--text-muted)",
+            marginTop: 4,
+            width: COVER_SIZE,
+            textAlign: "center",
+            lineHeight: 1.3,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {book.title}
+        </p>
+      )}
+    </div>
+  );
+}
+
 const MONTH_NAMES = [
   "January",
   "February",
@@ -138,67 +284,40 @@ export default function ReadingYear() {
               style={{
                 height: 1,
                 background: "var(--border)",
-                marginBottom: 12,
+                marginBottom: 16,
               }}
             />
-            <p style={SECTION_LABEL} className="mb-4">
+            <p style={SECTION_LABEL} className="mb-5">
               Reading Timeline
             </p>
-            <div className="flex flex-col gap-4">
-              {sortedMonths.map((key) => {
-                const monthBooks = byMonth[key];
-                const visible = monthBooks.slice(0, 5);
-                const overflow = monthBooks.length - 5;
-                return (
-                  <div key={key} className="flex items-start gap-3">
-                    <p
-                      style={{
-                        fontFamily: '"DM Sans", sans-serif',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        color: "var(--text-muted)",
-                        minWidth: 100,
-                        paddingTop: 2,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {formatMonth(key)}
-                    </p>
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {visible.map((book) => (
-                        <div
-                          key={book.id}
-                          className="rounded cursor-pointer book-cover-card"
-                          style={{
-                            width: 32,
-                            height: 48,
-                            overflow: "hidden",
-                            flexShrink: 0,
-                          }}
-                          onClick={() => navigate(`/book/${book.id}`)}
-                        >
-                          <BookCover
-                            book={book}
-                            className="w-full h-full"
-                            showDot={false}
-                          />
-                        </div>
-                      ))}
-                      {overflow > 0 && (
-                        <p
-                          style={{
-                            fontSize: 10,
-                            color: "var(--text-hint)",
-                            marginLeft: 4,
-                          }}
-                        >
-                          +{overflow} more
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+
+            {/* Timeline spine + months */}
+            <div style={{ position: "relative" }}>
+              {/* Vertical connector line */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: 3,
+                  top: 8,
+                  bottom: 8,
+                  width: 1,
+                  background: "var(--border)",
+                }}
+              />
+
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 28 }}
+              >
+                {sortedMonths.map((key, i) => (
+                  <MonthSection
+                    key={key}
+                    monthKey={key}
+                    books={byMonth[key]}
+                    navigate={navigate}
+                    isLast={i === sortedMonths.length - 1}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         )}
