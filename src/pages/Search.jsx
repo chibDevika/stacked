@@ -608,29 +608,31 @@ export default function Search() {
             </div>
           ) : null}
 
-          {/* Section label */}
-          <div className="mb-3">
-            <div
-              style={{
-                height: 1,
-                background: "var(--border)",
-                marginBottom: 10,
-              }}
-            />
-            <p
-              style={{
-                fontFamily: '"DM Sans", sans-serif',
-                fontSize: 10,
-                fontWeight: 500,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "var(--text-hint)",
-              }}
-            >
-              Recommended for You
-              {exploreRecs.length > 0 ? ` · ${exploreRecs.length} books` : ""}
-            </p>
-          </div>
+          {/* Section label — hidden while regenerating */}
+          {!regenLoading && (
+            <div className="mb-3">
+              <div
+                style={{
+                  height: 1,
+                  background: "var(--border)",
+                  marginBottom: 10,
+                }}
+              />
+              <p
+                style={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: 10,
+                  fontWeight: 500,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--text-hint)",
+                }}
+              >
+                Recommended for You
+                {exploreRecs.length > 0 ? ` · ${exploreRecs.length} books` : ""}
+              </p>
+            </div>
+          )}
 
           {/* Recs grid or loaders */}
           {exploreLoading && exploreRecs.length === 0 ? (
