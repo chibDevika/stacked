@@ -622,15 +622,7 @@ export default function Search() {
           {exploreLoading && exploreRecs.length === 0 ? (
             <BookSpineLoader messages={EXPLORE_MESSAGES} />
           ) : exploreRecs.length > 0 ? (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(5, minmax(0, 180px))",
-                gap: 16,
-                maxWidth: 900,
-                margin: "0 auto",
-              }}
-            >
+            <div className="explore-grid">
               {exploreRecs.map((rec, i) => (
                 <ExploreRecCard
                   key={rec.id || rec.title}

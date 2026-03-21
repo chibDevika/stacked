@@ -4,7 +4,6 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
-  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -142,9 +141,6 @@ export default function Home() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 8 },
-    }),
   );
 
   const filtered =
