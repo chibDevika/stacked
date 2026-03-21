@@ -5,7 +5,7 @@ import { addBook, getLibrary } from "../lib/storage.js";
 import {
   getExploreCacheRaw,
   replaceFromReserve,
-  precomputeIfStale,
+  forceRecompute,
 } from "../lib/explore.js";
 import BookCover from "../components/BookCover.jsx";
 import AddBookModal from "../components/AddBookModal.jsx";
@@ -245,15 +245,6 @@ export default function Search() {
     if (initialQ) doSearch(initialQ);
   }, []);
 
-  // Listen for background precompute finishing
-  useEffect(() => {
-    function handleUpdate() {
-      setExploreData(getExploreCacheRaw());
-    }
-    window.addEventListener("exploreUpdated", handleUpdate);
-    return () => window.removeEventListener("exploreUpdated", handleUpdate);
-  }, []);
-
   useEffect(() => {
     if (!searchMode) return;
     if (query.trim().length < 3) return;
@@ -293,21 +284,15 @@ export default function Search() {
 
   function handleExploreRemoved(rec) {
     replaceFromReserve(getLibrary(), rec);
-    // UI updates via exploreUpdated event
+    setExploreData(getExploreCacheRaw());
   }
 
-  function handleRefreshProfile() {
+  async function handleRefreshProfile() {
     if (profileRefreshing || library.length < 2) return;
     setProfileRefreshing(true);
-    const cache = getExploreCacheRaw();
-    if (cache) {
-      localStorage.setItem(
-        "stacked_explore",
-        JSON.stringify({ ...cache, libraryHash: "__force__" }),
-      );
-    }
-    precomputeIfStale(library);
-    setTimeout(() => setProfileRefreshing(false), 500);
+    const newCache = await forceRecompute(library);
+    setExploreData(newCache);
+    setProfileRefreshing(false);
   }
 
   const exploreRecs = exploreData?.shown || [];
@@ -579,6 +564,7 @@ export default function Search() {
               </p>
               <div className="flex justify-end mt-2">
                 <button
+                  type="button"
                   onClick={handleRefreshProfile}
                   disabled={profileRefreshing}
                   style={{
@@ -588,7 +574,7 @@ export default function Search() {
                     fontFamily: '"DM Sans", sans-serif',
                   }}
                 >
-                  {profileRefreshing ? "refreshing…" : "refresh ↻"}
+                  {profileRefreshing ? "hmm..." : "tell me more"}
                 </button>
               </div>
             </div>

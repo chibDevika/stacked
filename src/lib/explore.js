@@ -105,6 +105,13 @@ export function precomputeIfStale(library) {
   computeAndCache(library).catch(() => {});
 }
 
+// Awaitable recompute — forces a fresh Gemini call regardless of cache state
+export async function forceRecompute(library) {
+  if (library.length < 2) return getCache();
+  await computeAndCache(library);
+  return getCache();
+}
+
 // Pull next book from reserve, update cache, dispatch update.
 // If reserve empty, remove card and trigger background replenishment.
 export function replaceFromReserve(library, removedRec) {

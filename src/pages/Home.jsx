@@ -129,16 +129,6 @@ export default function Home() {
     refresh();
   }, [refresh]);
 
-  // Update recs when explore cache is refreshed in background
-  useEffect(() => {
-    function handleUpdate() {
-      const cache = getExploreCacheRaw();
-      if (cache?.shown) setRecs(cache.shown.slice(0, 3));
-    }
-    window.addEventListener("exploreUpdated", handleUpdate);
-    return () => window.removeEventListener("exploreUpdated", handleUpdate);
-  }, []);
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
@@ -160,7 +150,8 @@ export default function Home() {
   function handleRecRemoved(rec) {
     refresh();
     replaceFromReserve(getLibrary(), rec);
-    // UI updates via exploreUpdated event
+    const newCache = getExploreCacheRaw();
+    if (newCache?.shown) setRecs(newCache.shown.slice(0, 3));
   }
 
   return (
