@@ -1,0 +1,274 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Light mode (default) ─────────────────────────────── */
+:root {
+  --bg: #faf8f3;
+  --surface: #f2efe7;
+  --surface-2: #eae6dc;
+  --accent: #5c7a6b;
+  --accent-warm: #a0522d;
+  --text-primary: #1c1c1a;
+  --text-muted: #7a7468;
+  --text-hint: #a89f94;
+  --success: #4a7c65;
+  --border: #ddd9ce;
+  --badge-bg: #eaf0ec;
+  --accent-faded: rgba(92, 122, 107, 0.45);
+  --brand: #4a6741;
+}
+
+/* ── Dark mode ────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg: #111111;
+  --surface: #1a1a1a;
+  --surface-2: #222222;
+  --accent: #ef9f27;
+  --accent-warm: #ef9f27;
+  --text-primary: #f5f0e8;
+  --text-muted: #888780;
+  --text-hint: #555550;
+  --success: #5dcaa5;
+  --border: #2a2a2a;
+  --badge-bg: #1a1000;
+  --accent-faded: rgba(239, 159, 39, 0.45);
+  --brand: #ef9f27;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: "DM Sans", sans-serif;
+  font-weight: 400;
+}
+
+/* ── Global interaction defaults ─────────────────────── */
+button {
+  cursor: pointer;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+}
+button:hover {
+  opacity: 0.85;
+}
+button:active {
+  transform: scale(0.97);
+}
+
+a {
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+/* ── Book cover hover card ───────────────────────────── */
+.book-cover-card {
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+  border-radius: 6px;
+}
+.book-cover-card:hover {
+  transform: scale(1.03) translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Keyframes ───────────────────────────────────────── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enterFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes enterUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes coverEntrance {
+  from {
+    opacity: 0;
+    transform: scale(0.96) rotate(-1.5deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(-1.5deg);
+  }
+}
+
+@keyframes pulse-ellipsis {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes bookBreathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes pageFlip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(-160deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.book-spine {
+  width: 18px;
+  border-radius: 3px;
+  animation: bookBreathe 1.4s ease-in-out infinite;
+}
+.book-spine:nth-child(1) {
+  height: 72px;
+  background: var(--accent);
+  animation-delay: 0ms;
+}
+.book-spine:nth-child(2) {
+  height: 88px;
+  background: var(--accent-warm);
+  animation-delay: 180ms;
+}
+.book-spine:nth-child(3) {
+  height: 64px;
+  background: var(--accent);
+  animation-delay: 360ms;
+}
+
+.page-left {
+  width: 28px;
+  height: 40px;
+  background: var(--accent-warm);
+  border-radius: 2px 0 0 2px;
+  transform-origin: right center;
+  animation: pageFlip 1.2s ease-in-out infinite;
+}
+.page-right {
+  width: 28px;
+  height: 40px;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+  transform-origin: left center;
+  animation: pageFlip 1.2s ease-in-out infinite reverse;
+}
+
+.cursor-blink {
+  animation: blink 600ms step-end infinite;
+  color: var(--accent);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.4s ease forwards;
+}
+.animate-scale-in {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+/* ── Shimmer skeleton ────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface) 25%,
+    var(--surface-2) 50%,
+    var(--surface) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 2px;
+}
