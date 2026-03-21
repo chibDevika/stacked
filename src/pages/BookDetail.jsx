@@ -254,19 +254,6 @@ export default function BookDetail() {
   return (
     <div className="min-h-screen bg-app">
       {/* Back link — below sticky navbar */}
-      <button
-        onClick={() => navigate(-1)}
-        className="fixed z-10 text-sm"
-        style={{
-          top: 60,
-          left: 20,
-          fontFamily: '"DM Sans", sans-serif',
-          color: "var(--text-muted)",
-        }}
-      >
-        ← Shelf
-      </button>
-
       {/* Cover hero with dot-grid texture */}
       <div
         className="flex flex-col items-center pb-5 px-6 relative"

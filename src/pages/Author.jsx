@@ -28,20 +28,7 @@ export default function Author() {
 
   return (
     <div className="min-h-screen bg-app">
-      <button
-        onClick={() => navigate(-1)}
-        className="fixed z-10 text-sm"
-        style={{
-          top: 60,
-          left: 16,
-          fontFamily: '"DM Sans", sans-serif',
-          color: "var(--text-muted)",
-        }}
-      >
-        ← Back
-      </button>
-
-      <div className="pt-16 px-4 pb-8">
+      <div className="pt-6 px-4 pb-8">
         <h1 className="font-playfair text-primary text-2xl font-medium mb-1">
           {authorName}
         </h1>

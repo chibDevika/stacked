@@ -31,13 +31,14 @@ function TopNav({ isDark, onToggleTheme }) {
     >
       {/* Wordmark */}
       <span
-        className="font-playfair"
+        className="font-playfair cursor-pointer"
         style={{
           fontSize: 24,
           fontWeight: 600,
           color: "var(--brand)",
           letterSpacing: "-0.01em",
         }}
+        onClick={() => navigate("/")}
       >
         Stacked
       </span>
