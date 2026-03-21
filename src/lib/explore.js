@@ -1,4 +1,8 @@
-import { getTasteProfile, getExploreRecs } from "./gemini.js";
+import {
+  getTasteProfile,
+  getExploreRecs,
+  getExploreRecsExcluding,
+} from "./gemini.js";
 import { searchBookByTitleAuthor } from "./googleBooks.js";
 
 const EXPLORE_VERSION = "4";
@@ -110,6 +114,52 @@ export async function forceRecompute(library) {
   if (library.length < 2) return getCache();
   await computeAndCache(library);
   return getCache();
+}
+
+// Regen count — tracks how many times user has regenerated for the current library
+const REGEN_KEY = "stacked_regen_count";
+
+export function getRegenInfo(library) {
+  const hash = libraryHash(library);
+  try {
+    const raw = JSON.parse(localStorage.getItem(REGEN_KEY) || "null");
+    if (!raw || raw.libraryHash !== hash) return { count: 0 };
+    return { count: raw.count };
+  } catch {
+    return { count: 0 };
+  }
+}
+
+export function incrementRegenCount(library) {
+  const hash = libraryHash(library);
+  const { count } = getRegenInfo(library);
+  const next = { count: count + 1, libraryHash: hash };
+  localStorage.setItem(REGEN_KEY, JSON.stringify(next));
+  return next.count;
+}
+
+// Fetch a fresh set of 20 recs excluding everything currently shown/reserved
+export async function regenerateRecs(library) {
+  const cache = getCache();
+  const excludeTitles = [
+    ...(cache?.shown || []).map((b) => b.title),
+    ...(cache?.reserve || []).map((b) => b.title),
+    ...library.map((b) => b.title),
+  ];
+
+  const rawRecs = await getExploreRecsExcluding(library, excludeTitles);
+  const recs = await enrichRecs(rawRecs);
+
+  const newCache = {
+    ...(cache || {}),
+    libraryHash: libraryHash(library),
+    version: EXPLORE_VERSION,
+    shown: recs.slice(0, SHOWN_COUNT),
+    reserve: recs.slice(SHOWN_COUNT),
+    generatedAt: Date.now(),
+  };
+  setCache(newCache);
+  return newCache;
 }
 
 // Refresh only the taste profile, leaving recs/reserve untouched

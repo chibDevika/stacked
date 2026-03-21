@@ -6,6 +6,9 @@ import {
   getExploreCacheRaw,
   replaceFromReserve,
   refreshTasteProfile,
+  regenerateRecs,
+  getRegenInfo,
+  incrementRegenCount,
 } from "../lib/explore.js";
 import BookCover from "../components/BookCover.jsx";
 import AddBookModal from "../components/AddBookModal.jsx";
@@ -236,12 +239,16 @@ export default function Search() {
   // Synchronous init from cache — no loading delay
   const [exploreData, setExploreData] = useState(() => getExploreCacheRaw());
   const [profileRefreshing, setProfileRefreshing] = useState(false);
+  const [regenLoading, setRegenLoading] = useState(false);
+  const [regenCount, setRegenCount] = useState(0);
 
   const inputRef = useRef(null);
+  const gridRef = useRef(null);
 
   useEffect(() => {
     const lib = getLibrary();
     setLibraryState(lib);
+    setRegenCount(getRegenInfo(lib).count);
     if (initialQ) doSearch(initialQ);
   }, []);
 
@@ -293,6 +300,27 @@ export default function Search() {
     const newCache = await refreshTasteProfile(library);
     setExploreData(newCache);
     setProfileRefreshing(false);
+  }
+
+  async function handleRegen() {
+    if (regenLoading || regenCount >= 3) return;
+    setRegenLoading(true);
+    try {
+      const newCache = await regenerateRecs(library);
+      const newCount = incrementRegenCount(library);
+      setExploreData(newCache);
+      setRegenCount(newCount);
+      setTimeout(
+        () =>
+          gridRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          }),
+        100,
+      );
+    } finally {
+      setRegenLoading(false);
+    }
   }
 
   const exploreRecs = exploreData?.shown || [];
@@ -604,20 +632,80 @@ export default function Search() {
             </p>
           </div>
 
-          {/* 12-book grid */}
+          {/* Recs grid or loaders */}
           {exploreLoading && exploreRecs.length === 0 ? (
             <BookSpineLoader messages={EXPLORE_MESSAGES} />
+          ) : regenLoading ? (
+            <>
+              <p
+                style={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                  textAlign: "center",
+                  marginBottom: 16,
+                }}
+              >
+                Finding new picks...
+              </p>
+              <BookSpineLoader messages={null} />
+            </>
           ) : exploreRecs.length > 0 ? (
-            <div className="explore-grid">
-              {exploreRecs.map((rec, i) => (
-                <ExploreRecCard
-                  key={rec.id || rec.title}
-                  rec={rec}
-                  delay={i * 30}
-                  onRemoved={() => handleExploreRemoved(rec)}
-                />
-              ))}
-            </div>
+            <>
+              <div ref={gridRef} className="explore-grid">
+                {exploreRecs.map((rec, i) => (
+                  <ExploreRecCard
+                    key={rec.id || rec.title}
+                    rec={rec}
+                    delay={i * 30}
+                    onRemoved={() => handleExploreRemoved(rec)}
+                  />
+                ))}
+              </div>
+
+              {/* Regenerate button */}
+              <div style={{ textAlign: "center", marginTop: 28 }}>
+                {regenCount >= 3 ? (
+                  <p
+                    style={{
+                      fontFamily: '"DM Sans", sans-serif',
+                      fontSize: 13,
+                      color: "var(--text-hint)",
+                      maxWidth: 260,
+                      margin: "0 auto",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    You've explored a lot of options. Try adding a book first to
+                    get better picks. ↑
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleRegen}
+                    style={{
+                      fontFamily: '"DM Sans", sans-serif',
+                      fontSize: 13,
+                      color: "var(--text-muted)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "color 150ms ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "var(--accent)";
+                      e.currentTarget.style.textDecoration = "underline";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "var(--text-muted)";
+                      e.currentTarget.style.textDecoration = "none";
+                    }}
+                  >
+                    Not feeling these? Find different books →
+                  </button>
+                )}
+              </div>
+            </>
           ) : (
             <div className="flex flex-col items-center py-16 text-center">
               <p className="text-muted text-sm">

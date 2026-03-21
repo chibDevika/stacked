@@ -55,6 +55,25 @@ Library: ${listStr}`;
   return result.response.text().trim();
 }
 
+export async function getExploreRecsExcluding(bookList, excludeTitles) {
+  const genAI = getClient();
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const listStr = bookList.map((b) => `"${b.title}" by ${b.author}`).join(", ");
+  const excludeStr = excludeTitles.join(", ");
+  const prompt = `You are a perceptive literary advisor. Analyse this reader's library and recommend exactly 20 books that would genuinely resonate with this specific reader. Do NOT just recommend more books by the same authors. Consider emotional tone, narrative voice, thematic obsessions, pacing, the feeling a book leaves you with. For each book provide: title, author, and a reason (max 12 words) that speaks to this reader's specific taste, not just genre. Do not recommend any of these books: ${excludeStr}. Find genuinely different options — different genres, different tones, different from what was suggested before. Return ONLY valid JSON, no markdown: [{"title":"","author":"","reason":""}]. Library: ${listStr}`;
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim();
+  const cleaned = text
+    .replace(/^```json?\n?/, "")
+    .replace(/\n?```$/, "")
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    return [];
+  }
+}
+
 export async function getExploreRecs(bookList) {
   const genAI = getClient();
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
