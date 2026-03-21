@@ -1,12 +1,9 @@
 import { useState } from "react";
 import { CoverFallback } from "../lib/covers.jsx";
-import { addBook } from "../lib/storage.js";
-import { searchBookByTitleAuthor } from "../lib/googleBooks.js";
 import BookPreviewSheet from "./BookPreviewSheet.jsx";
 
 export default function RecCard({ rec, onRemoved }) {
   const [imgError, setImgError] = useState(false);
-  const [added, setAdded] = useState(false);
   const [fading, setFading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -24,36 +21,18 @@ export default function RecCard({ rec, onRemoved }) {
     publisher: rec.publisher || null,
   };
 
-  async function doAdd(bookData) {
-    addBook({
-      ...bookData,
-      status: "want-to-read",
-      dateAdded: new Date().toISOString(),
-      yearRead: null,
-    });
-    setAdded(true);
-    // Show checkmark, then fade out card, then notify parent
+  function handleAdded() {
+    setShowPreview(false);
     setTimeout(() => {
       setFading(true);
       setTimeout(() => onRemoved?.(), 300);
     }, 1200);
   }
 
-  async function handleDirectAdd(e) {
-    e.stopPropagation();
-    if (added) return;
-    if (rec.id) {
-      doAdd(bookObj);
-    } else {
-      const book = await searchBookByTitleAuthor(rec.title, rec.author);
-      doAdd(book || bookObj);
-    }
-  }
-
   return (
     <>
       <div
-        className="flex gap-3 rounded-lg p-3 pr-4 cursor-pointer"
+        className="flex gap-3 rounded-lg p-3 cursor-pointer"
         style={{
           background: "var(--surface)",
           opacity: fading ? 0 : 1,
@@ -106,31 +85,13 @@ export default function RecCard({ rec, onRemoved }) {
             {rec.reason}
           </span>
         </div>
-
-        <button
-          onClick={handleDirectAdd}
-          disabled={added}
-          className="shrink-0 text-xs font-medium"
-          style={{
-            color: added ? "var(--success)" : "var(--accent)",
-          }}
-        >
-          {added ? "✓ Added" : "+ Add"}
-        </button>
       </div>
 
       {showPreview && (
         <BookPreviewSheet
           book={bookObj}
           onClose={() => setShowPreview(false)}
-          onAdded={() => {
-            setAdded(true);
-            setShowPreview(false);
-            setTimeout(() => {
-              setFading(true);
-              setTimeout(() => onRemoved?.(), 300);
-            }, 1200);
-          }}
+          onAdded={handleAdded}
         />
       )}
     </>
