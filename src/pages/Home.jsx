@@ -225,6 +225,7 @@ export default function Home() {
             collisionDetection={closestCenter}
             onDragStart={() => setDragging(true)}
             onDragEnd={handleDragEnd}
+            onDragCancel={() => setDragging(false)}
           >
             <SortableContext
               items={filtered.map((b) => b.id)}
