@@ -483,7 +483,10 @@ export default function BookDetail() {
               style={{
                 fontFamily: '"DM Sans", sans-serif',
                 fontSize: 13,
-                color: "#e05252",
+                color: "#c0392b",
+                background: "#fdecea",
+                padding: "4px 12px",
+                borderRadius: 8,
               }}
             >
               Remove
@@ -507,14 +510,13 @@ export default function BookDetail() {
             style={{
               fontFamily: '"DM Sans", sans-serif',
               fontSize: 13,
-              color: "var(--text-hint)",
+              color: "#c0392b",
+              background: "#fdecea",
+              padding: "6px 20px",
+              borderRadius: 10,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#e05252")}
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.color = "var(--text-hint)")
-            }
           >
-            Remove from library
+            Remove
           </button>
         )}
       </div>
