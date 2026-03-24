@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   getLibrary,
   updateBookStatus,
+  removeBook,
   getNote,
   setNote,
   initSeedNotes,
@@ -211,6 +212,7 @@ export default function BookDetail() {
   const [library, setLibrary] = useState([]);
   const [descExpanded, setDescExpanded] = useState(false);
   const [preview, setPreview] = useState(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   useEffect(() => {
     initSeedNotes();
@@ -231,6 +233,11 @@ export default function BookDetail() {
       });
     }
   }, [id]);
+
+  function handleRemove() {
+    removeBook(id);
+    navigate("/");
+  }
 
   function handleStatusChange(status) {
     updateBookStatus(id, status);
@@ -453,6 +460,64 @@ export default function BookDetail() {
           </div>
         </div>
       )}
+
+      {/* Remove from library */}
+      <div
+        className="px-6 pt-4 pb-8 flex justify-center"
+        style={{ borderTop: "1px solid var(--border)" }}
+      >
+        {confirmRemove ? (
+          <div className="flex items-center gap-4">
+            <p
+              style={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: 13,
+                color: "var(--text-muted)",
+              }}
+            >
+              Remove from library?
+            </p>
+            <button
+              type="button"
+              onClick={handleRemove}
+              style={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: 13,
+                color: "#e05252",
+              }}
+            >
+              Remove
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmRemove(false)}
+              style={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: 13,
+                color: "var(--text-hint)",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmRemove(true)}
+            style={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: 13,
+              color: "var(--text-hint)",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#e05252")}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = "var(--text-hint)")
+            }
+          >
+            Remove from library
+          </button>
+        )}
+      </div>
 
       {preview && (
         <BookPreviewSheet

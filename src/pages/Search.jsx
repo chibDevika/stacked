@@ -262,7 +262,16 @@ export default function Search() {
   async function doSearch(q) {
     if (!q.trim()) return;
     setSearchLoading(true);
-    const found = await searchBooks(q, 10);
+    const byMatch = q.match(/^(.+?)\s+by\s+(.+)$/i);
+    let found;
+    if (byMatch) {
+      const title = byMatch[1].trim();
+      const author = byMatch[2].trim();
+      found = await searchBooks(`intitle:${title} inauthor:${author}`, 10);
+      if (found.length === 0) found = await searchBooks(q, 10);
+    } else {
+      found = await searchBooks(q, 10);
+    }
     setResults(found);
     setSearchLoading(false);
   }

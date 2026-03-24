@@ -80,6 +80,7 @@ export default function ScanProcessing() {
   const [error, setError] = useState(null);
   const [addState, setAddState] = useState("idle"); // idle | adding | done
   const [selectedStatus, setSelectedStatus] = useState("read");
+  const [deselected, setDeselected] = useState(new Set());
   const scanStarted = useRef(false);
 
   useEffect(() => {
@@ -101,18 +102,26 @@ export default function ScanProcessing() {
       });
   }, []);
 
+  function toggleDeselect(bookId) {
+    setDeselected((prev) => {
+      const next = new Set(prev);
+      next.has(bookId) ? next.delete(bookId) : next.add(bookId);
+      return next;
+    });
+  }
+
+  const toAdd = books.filter((b) => b.matched && !deselected.has(b.id));
+
   function handleAddAll() {
     if (addState !== "idle") return;
     setAddState("adding");
-    books
-      .filter((b) => b.matched)
-      .forEach((b) => {
-        addBook({
-          ...b,
-          status: selectedStatus,
-          yearRead: selectedStatus === "read" ? new Date().getFullYear() : null,
-        });
+    toAdd.forEach((b) => {
+      addBook({
+        ...b,
+        status: selectedStatus,
+        yearRead: selectedStatus === "read" ? new Date().getFullYear() : null,
       });
+    });
     setAddState("done");
     setTimeout(() => navigate("/"), 1000);
   }
@@ -152,6 +161,8 @@ export default function ScanProcessing() {
             book={book}
             index={i}
             navigate={navigate}
+            isSelected={!deselected.has(book.id)}
+            onToggle={() => toggleDeselect(book.id)}
           />
         ))}
 
@@ -176,7 +187,7 @@ export default function ScanProcessing() {
         )}
       </div>
 
-      {done && books.some((b) => b.matched) && (
+      {done && toAdd.length > 0 && (
         <div
           className="fixed bottom-0 left-0 right-0 flex flex-col items-center"
           style={{
@@ -246,8 +257,8 @@ export default function ScanProcessing() {
             {addState === "adding"
               ? "Adding…"
               : addState === "done"
-                ? `✓ ${books.filter((b) => b.matched).length} Books Added`
-                : `Add ${books.filter((b) => b.matched).length} Books to Shelf`}
+                ? `✓ ${toAdd.length} Books Added`
+                : `Add ${toAdd.length} ${toAdd.length === 1 ? "Book" : "Books"} to Shelf`}
           </button>
         </div>
       )}
@@ -255,7 +266,7 @@ export default function ScanProcessing() {
   );
 }
 
-function ScanBookCard({ book, index, navigate }) {
+function ScanBookCard({ book, index, navigate, isSelected, onToggle }) {
   const [imgError, setImgError] = useState(false);
 
   return (
@@ -265,6 +276,7 @@ function ScanBookCard({ book, index, navigate }) {
         animationDelay: `${index * 150}ms`,
         opacity: 0,
         animationFillMode: "forwards",
+        transition: "opacity 200ms ease",
       }}
     >
       <div
@@ -325,7 +337,36 @@ function ScanBookCard({ book, index, navigate }) {
           )}
         </div>
       </div>
-      {!book.matched && (
+      {book.matched ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          style={{
+            flexShrink: 0,
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            border: `1.5px solid ${isSelected ? "var(--success)" : "var(--border)"}`,
+            background: isSelected ? "var(--success)" : "transparent",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background 150ms ease, border-color 150ms ease",
+          }}
+        >
+          {isSelected && (
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M2 6l3 3 5-5"
+                stroke="var(--bg)"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
+      ) : (
         <button
           onClick={() =>
             navigate(`/search?q=${encodeURIComponent(book.title)}`)
