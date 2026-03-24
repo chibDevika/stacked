@@ -289,7 +289,6 @@ export default function BookDetail() {
           style={{
             width: 150,
             aspectRatio: "2/3",
-            transform: "rotate(-1.5deg)",
             boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
             position: "relative",
             zIndex: 1,
