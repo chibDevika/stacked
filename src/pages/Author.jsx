@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getAuthorBooks } from "../lib/googleBooks.js";
-import { getLibrary } from "../lib/storage.js";
+import { useLibrary } from "../contexts/LibraryContext.jsx";
 import BookCover from "../components/BookCover.jsx";
 import BookPreviewSheet from "../components/BookPreviewSheet.jsx";
 
 export default function Author() {
   const { name } = useParams();
   const navigate = useNavigate();
+  const { library } = useLibrary();
   const [books, setBooks] = useState([]);
-  const [library, setLibrary] = useState([]);
   const [loading, setLoading] = useState(true);
   const [addedIds, setAddedIds] = useState(new Set());
   const [preview, setPreview] = useState(null);
@@ -17,7 +17,6 @@ export default function Author() {
   const authorName = decodeURIComponent(name);
 
   useEffect(() => {
-    setLibrary(getLibrary());
     getAuthorBooks(authorName, 20).then((b) => {
       setBooks(b);
       setLoading(false);
@@ -94,7 +93,6 @@ export default function Author() {
           onClose={() => setPreview(null)}
           onAdded={() => {
             setAddedIds((prev) => new Set([...prev, preview.id]));
-            setLibrary(getLibrary());
             setPreview(null);
           }}
         />

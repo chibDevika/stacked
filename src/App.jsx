@@ -6,6 +6,7 @@ import {
   NavLink,
   useLocation,
   useNavigate,
+  Navigate,
 } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import Scan from "./pages/Scan.jsx";
@@ -14,11 +15,13 @@ import Author from "./pages/Author.jsx";
 import Search from "./pages/Search.jsx";
 import ReadingYear from "./pages/ReadingYear.jsx";
 import ScanProcessing from "./pages/ScanProcessing.jsx";
-import { getLibrary } from "./lib/storage.js";
-import { precomputeIfStale } from "./lib/explore.js";
+import Auth from "./pages/Auth.jsx";
+import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
+import { LibraryProvider } from "./contexts/LibraryContext.jsx";
 
 function TopNav({ isDark, onToggleTheme }) {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   return (
     <header
@@ -47,6 +50,7 @@ function TopNav({ isDark, onToggleTheme }) {
       <div className="flex items-center" style={{ gap: 16 }}>
         {/* Theme toggle */}
         <button
+          type="button"
           onClick={onToggleTheme}
           style={{ color: "var(--text-muted)", display: "flex" }}
         >
@@ -85,6 +89,7 @@ function TopNav({ isDark, onToggleTheme }) {
 
         {/* Add book */}
         <button
+          type="button"
           onClick={() => navigate("/search")}
           style={{ color: "var(--text-muted)", display: "flex" }}
         >
@@ -103,6 +108,31 @@ function TopNav({ isDark, onToggleTheme }) {
             />
           </svg>
         </button>
+
+        {/* Sign out */}
+        {user && (
+          <button
+            type="button"
+            onClick={signOut}
+            style={{ color: "var(--text-muted)", display: "flex" }}
+            title="Sign out"
+          >
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+              />
+            </svg>
+          </button>
+        )}
       </div>
     </header>
   );
@@ -241,10 +271,37 @@ function BottomNav() {
   );
 }
 
+function ProtectedRoute({ children }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--bg)" }}
+      >
+        <p
+          style={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: 13,
+            color: "var(--text-hint)",
+          }}
+        >
+          Loading…
+        </p>
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/auth" replace />;
+  return children;
+}
+
 function AppShell() {
   const [isDark, setIsDark] = useState(
     () => localStorage.getItem("stacked_theme") === "dark",
   );
+  const { isLoading } = useAuth();
 
   function toggleTheme() {
     const next = isDark ? "light" : "dark";
@@ -253,23 +310,57 @@ function AppShell() {
     document.documentElement.setAttribute("data-theme", next);
   }
 
+  // While resolving auth session show a blank screen to avoid flash
+  if (isLoading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "var(--bg)" }}
+      >
+        <p
+          style={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: 13,
+            color: "var(--text-hint)",
+          }}
+        >
+          Loading…
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-app text-primary font-dm">
       <ScrollToTop />
-      <TopNav isDark={isDark} onToggleTheme={toggleTheme} />
-      {/* Push all content below the 56px sticky navbar */}
-      <div className="pt-14 pb-20">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/scan" element={<Scan />} />
-          <Route path="/scan-processing" element={<ScanProcessing />} />
-          <Route path="/book/:id" element={<BookDetail />} />
-          <Route path="/author/:name" element={<Author />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/year" element={<ReadingYear />} />
-        </Routes>
-      </div>
-      <BottomNav />
+      <Routes>
+        <Route path="/auth" element={<Auth />} />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <LibraryProvider>
+                <TopNav isDark={isDark} onToggleTheme={toggleTheme} />
+                <div className="pt-14 pb-20">
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/scan" element={<Scan />} />
+                    <Route
+                      path="/scan-processing"
+                      element={<ScanProcessing />}
+                    />
+                    <Route path="/book/:id" element={<BookDetail />} />
+                    <Route path="/author/:name" element={<Author />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path="/year" element={<ReadingYear />} />
+                  </Routes>
+                </div>
+                <BottomNav />
+              </LibraryProvider>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
     </div>
   );
 }
@@ -278,23 +369,13 @@ export default function App() {
   useEffect(() => {
     const saved = localStorage.getItem("stacked_theme") || "light";
     document.documentElement.setAttribute("data-theme", saved);
-
-    // Precompute explore cache on mount
-    precomputeIfStale(getLibrary());
-
-    // Re-run whenever library changes (book added/removed/status changed)
-    function handleStorageChange(e) {
-      if (e.key === "stacked_library") {
-        precomputeIfStale(getLibrary());
-      }
-    }
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   return (
     <BrowserRouter>
-      <AppShell />
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

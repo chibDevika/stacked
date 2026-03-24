@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   DndContext,
@@ -14,7 +14,8 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { getLibrary, setLibrary } from "../lib/storage.js";
+import { useLibrary } from "../contexts/LibraryContext.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
 import { getExploreCacheRaw, replaceFromReserve } from "../lib/explore.js";
 import { QUOTES } from "../lib/quotes.js";
 import FilterPills from "../components/FilterPills.jsx";
@@ -113,7 +114,8 @@ function SortableBookCard({ book, onClick }) {
 }
 
 export default function Home() {
-  const [library, setLibraryState] = useState([]);
+  const { library, setLibrary: setLibraryCtx, isLoading } = useLibrary();
+  const { user } = useAuth();
   const [filter, setFilter] = useState("all");
   const [recs, setRecs] = useState(
     () => getExploreCacheRaw()?.shown?.slice(0, 3) || [],
@@ -121,13 +123,11 @@ export default function Home() {
   const [dragging, setDragging] = useState(false);
   const navigate = useNavigate();
 
-  const refresh = useCallback(() => {
-    setLibraryState(getLibrary());
-  }, []);
-
+  // Sync recs when library loads
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    const cache = getExploreCacheRaw();
+    if (cache?.shown) setRecs(cache.shown.slice(0, 3));
+  }, [library]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -143,13 +143,11 @@ export default function Home() {
     const oldIndex = library.findIndex((b) => b.id === active.id);
     const newIndex = library.findIndex((b) => b.id === over.id);
     const reordered = arrayMove(library, oldIndex, newIndex);
-    setLibraryState(reordered);
-    setLibrary(reordered);
+    setLibraryCtx(reordered);
   }
 
   function handleRecRemoved(rec) {
-    refresh();
-    replaceFromReserve(getLibrary(), rec);
+    replaceFromReserve(library, rec);
     const newCache = getExploreCacheRaw();
     if (newCache?.shown) setRecs(newCache.shown.slice(0, 3));
   }
@@ -170,7 +168,11 @@ export default function Home() {
           }}
         >
           {getGreeting()}{" "}
-          <span style={{ color: "var(--accent-warm)" }}>Devika</span>
+          {user?.user_metadata?.display_name && (
+            <span style={{ color: "var(--accent-warm)" }}>
+              {user.user_metadata.display_name.split(" ")[0]}
+            </span>
+          )}
         </p>
       </div>
 

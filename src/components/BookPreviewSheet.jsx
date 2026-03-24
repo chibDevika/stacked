@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CoverFallback } from "../lib/covers.jsx";
-import { addBook } from "../lib/storage.js";
+import { useLibrary } from "../contexts/LibraryContext.jsx";
 
 const STATUSES = [
   { key: "want-to-read", label: "Want to Read" },
@@ -61,6 +61,7 @@ function DotRating({ rating, count }) {
 }
 
 export default function BookPreviewSheet({ book, onClose, onAdded }) {
+  const { addBook } = useLibrary();
   const [imgError, setImgError] = useState(false);
   const [added, setAdded] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);

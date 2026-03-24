@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { searchBooks } from "../lib/googleBooks.js";
-import { addBook, getLibrary } from "../lib/storage.js";
+import { useLibrary } from "../contexts/LibraryContext.jsx";
 import {
   getExploreCacheRaw,
   replaceFromReserve,
@@ -228,13 +228,13 @@ function truncateProfile(text) {
 export default function Search() {
   const [searchParams] = useSearchParams();
   const initialQ = searchParams.get("q") || "";
+  const { library, addBook } = useLibrary();
 
   const [searchMode, setSearchMode] = useState(!!initialQ);
   const [query, setQuery] = useState(initialQ);
   const [results, setResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [library, setLibraryState] = useState([]);
 
   // Synchronous init from cache — no loading delay
   const [exploreData, setExploreData] = useState(() => getExploreCacheRaw());
@@ -246,9 +246,7 @@ export default function Search() {
   const gridRef = useRef(null);
 
   useEffect(() => {
-    const lib = getLibrary();
-    setLibraryState(lib);
-    setRegenCount(getRegenInfo(lib).count);
+    setRegenCount(getRegenInfo(library).count);
     if (initialQ) doSearch(initialQ);
   }, []);
 
@@ -293,13 +291,13 @@ export default function Search() {
       ...selected,
       status,
       yearRead: status === "read" ? new Date().getFullYear() : null,
+      dateAdded: new Date().toISOString(),
     });
-    setLibraryState(getLibrary());
     setSelected(null);
   }
 
   function handleExploreRemoved(rec) {
-    replaceFromReserve(getLibrary(), rec);
+    replaceFromReserve(library, rec);
     setExploreData(getExploreCacheRaw());
   }
 

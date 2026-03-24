@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { processScan } from "../lib/scanFlow.js";
-import { addBook } from "../lib/storage.js";
+import { useLibrary } from "../contexts/LibraryContext.jsx";
 import { CoverFallback } from "../lib/covers.jsx";
 
 const SCAN_MESSAGES = [
@@ -75,6 +75,7 @@ const STATUS_OPTIONS = [
 export default function ScanProcessing() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const { addBook } = useLibrary();
   const [books, setBooks] = useState([]);
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
@@ -112,16 +113,19 @@ export default function ScanProcessing() {
 
   const toAdd = books.filter((b) => b.matched && !deselected.has(b.id));
 
-  function handleAddAll() {
+  async function handleAddAll() {
     if (addState !== "idle") return;
     setAddState("adding");
-    toAdd.forEach((b) => {
-      addBook({
-        ...b,
-        status: selectedStatus,
-        yearRead: selectedStatus === "read" ? new Date().getFullYear() : null,
-      });
-    });
+    await Promise.all(
+      toAdd.map((b) =>
+        addBook({
+          ...b,
+          status: selectedStatus,
+          yearRead: selectedStatus === "read" ? new Date().getFullYear() : null,
+          dateAdded: new Date().toISOString(),
+        }),
+      ),
+    );
     setAddState("done");
     setTimeout(() => navigate("/"), 1000);
   }

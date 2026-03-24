@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import {
-  getLibrary,
-  updateBookStatus,
-  removeBook,
-  getNote,
-  setNote,
-  initSeedNotes,
-} from "../lib/storage.js";
+import { useLibrary } from "../contexts/LibraryContext.jsx";
 import { getAuthorBooks } from "../lib/googleBooks.js";
 import StatusToggle from "../components/StatusToggle.jsx";
 import BookCover from "../components/BookCover.jsx";
@@ -31,6 +24,7 @@ function formatNoteDate(isoString) {
 }
 
 function MyReview({ bookId }) {
+  const { getNote, setNote } = useLibrary();
   const noteData = getNote(bookId);
   const [note, setNoteState] = useState(noteData?.text || "");
   const [addedAt] = useState(noteData?.addedAt || null);
@@ -207,18 +201,15 @@ function MyReview({ bookId }) {
 export default function BookDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { library, updateBookStatus, removeBook } = useLibrary();
   const [book, setBook] = useState(null);
   const [authorBooks, setAuthorBooks] = useState([]);
-  const [library, setLibrary] = useState([]);
   const [descExpanded, setDescExpanded] = useState(false);
   const [preview, setPreview] = useState(null);
   const [confirmRemove, setConfirmRemove] = useState(false);
 
   useEffect(() => {
-    initSeedNotes();
-    const lib = getLibrary();
-    setLibrary(lib);
-    const found = lib.find((b) => b.id === id);
+    const found = library.find((b) => b.id === id);
     setBook(found || null);
     if (found) {
       getAuthorBooks(found.author).then((books) => {
@@ -232,7 +223,7 @@ export default function BookDetail() {
         setAuthorBooks(deduped.slice(0, 5));
       });
     }
-  }, [id]);
+  }, [id, library]);
 
   function handleRemove() {
     removeBook(id);

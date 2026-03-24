@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getLibrary, getNote } from "../lib/storage.js";
+import { useLibrary } from "../contexts/LibraryContext.jsx";
 import BookCover from "../components/BookCover.jsx";
 
 const COVER_SIZE = 80;
@@ -179,12 +179,8 @@ const SECTION_LABEL = {
 };
 
 export default function ReadingYear() {
-  const [library, setLibrary] = useState([]);
+  const { library, getNote } = useLibrary();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setLibrary(getLibrary());
-  }, []);
 
   const readBooks = library.filter((b) => b.status === "read");
   const wantToReadBooks = library.filter((b) => b.status === "want-to-read");
