@@ -168,9 +168,15 @@ export default function Home() {
           }}
         >
           {getGreeting()}{" "}
-          {user?.user_metadata?.display_name && (
+          {(user?.user_metadata?.display_name ||
+            user?.user_metadata?.full_name) && (
             <span style={{ color: "var(--accent-warm)" }}>
-              {user.user_metadata.display_name.split(" ")[0]}
+              {
+                (
+                  user.user_metadata.display_name ||
+                  user.user_metadata.full_name
+                ).split(" ")[0]
+              }
             </span>
           )}
         </p>
