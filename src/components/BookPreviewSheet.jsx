@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CoverFallback } from "../lib/covers.jsx";
 import { useLibrary } from "../contexts/LibraryContext.jsx";
+import { useAuthWall } from "../contexts/AuthWallContext.jsx";
 
 const STATUSES = [
   { key: "want-to-read", label: "Want to Read" },
@@ -62,19 +63,22 @@ function DotRating({ rating, count }) {
 
 export default function BookPreviewSheet({ book, onClose, onAdded }) {
   const { addBook } = useLibrary();
+  const { requireAuth } = useAuthWall();
   const [imgError, setImgError] = useState(false);
   const [added, setAdded] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
 
   function handleAdd(status) {
-    addBook({
-      ...book,
-      status,
-      yearRead: status === "read" ? new Date().getFullYear() : null,
-      dateAdded: new Date().toISOString(),
+    requireAuth(() => {
+      addBook({
+        ...book,
+        status,
+        yearRead: status === "read" ? new Date().getFullYear() : null,
+        dateAdded: new Date().toISOString(),
+      });
+      setAdded(true);
+      setTimeout(() => onAdded?.(), 800);
     });
-    setAdded(true);
-    setTimeout(() => onAdded?.(), 800);
   }
 
   const year = book.publishedDate ? book.publishedDate.slice(0, 4) : null;

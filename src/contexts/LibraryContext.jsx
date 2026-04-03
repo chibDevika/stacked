@@ -16,6 +16,7 @@ import {
   dbSetNote,
   dbSeedForNewUser,
 } from "../lib/db.js";
+import { SEED_BOOKS } from "../lib/seed.js";
 import { precomputeIfStale } from "../lib/explore.js";
 
 const LibraryContext = createContext(null);
@@ -28,9 +29,11 @@ export function LibraryProvider({ children }) {
 
   const loadData = useCallback(async () => {
     if (!user) {
-      setLibraryState([]);
+      // Guest mode: show demo seed library without touching the database
+      setLibraryState(SEED_BOOKS);
       setNotes({});
       setIsLoading(false);
+      precomputeIfStale(SEED_BOOKS);
       return;
     }
     setIsLoading(true);

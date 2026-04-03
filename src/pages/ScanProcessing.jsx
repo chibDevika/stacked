@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { processScan } from "../lib/scanFlow.js";
 import { useLibrary } from "../contexts/LibraryContext.jsx";
+import { useAuthWall } from "../contexts/AuthWallContext.jsx";
 import { CoverFallback } from "../lib/covers.jsx";
 
 const SCAN_MESSAGES = [
@@ -76,6 +77,7 @@ export default function ScanProcessing() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { addBook } = useLibrary();
+  const { requireAuth } = useAuthWall();
   const [books, setBooks] = useState([]);
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
@@ -85,7 +87,13 @@ export default function ScanProcessing() {
   const scanStarted = useRef(false);
 
   useEffect(() => {
-    if (!state?.base64) {
+    const images =
+      state?.images ||
+      (state?.base64
+        ? [{ base64: state.base64, mimeType: state.mimeType || "image/jpeg" }]
+        : null);
+
+    if (!images) {
       navigate("/scan");
       return;
     }
@@ -93,14 +101,28 @@ export default function ScanProcessing() {
     if (scanStarted.current) return;
     scanStarted.current = true;
 
-    processScan(state.base64, state.mimeType || "image/jpeg", (book) => {
+    const seenIds = new Set();
+    const seenTitles = new Set();
+
+    function onBook(book) {
+      const titleKey = book.title.trim().toLowerCase();
+      if (book.matched && seenIds.has(book.id)) return;
+      if (seenTitles.has(titleKey)) return;
+      if (book.matched) seenIds.add(book.id);
+      seenTitles.add(titleKey);
       setBooks((prev) => [...prev, book]);
-    })
-      .then(() => setDone(true))
-      .catch((err) => {
-        setError(err.message || "Failed to process image");
-        setDone(true);
-      });
+    }
+
+    (async () => {
+      for (const img of images) {
+        try {
+          await processScan(img.base64, img.mimeType || "image/jpeg", onBook);
+        } catch (err) {
+          setError(err.message || "Failed to process image");
+        }
+      }
+      setDone(true);
+    })();
   }, []);
 
   function toggleDeselect(bookId) {
@@ -115,19 +137,22 @@ export default function ScanProcessing() {
 
   async function handleAddAll() {
     if (addState !== "idle") return;
-    setAddState("adding");
-    await Promise.all(
-      toAdd.map((b) =>
-        addBook({
-          ...b,
-          status: selectedStatus,
-          yearRead: selectedStatus === "read" ? new Date().getFullYear() : null,
-          dateAdded: new Date().toISOString(),
-        }),
-      ),
-    );
-    setAddState("done");
-    setTimeout(() => navigate("/"), 1000);
+    requireAuth(async () => {
+      setAddState("adding");
+      await Promise.all(
+        toAdd.map((b) =>
+          addBook({
+            ...b,
+            status: selectedStatus,
+            yearRead:
+              selectedStatus === "read" ? new Date().getFullYear() : null,
+            dateAdded: new Date().toISOString(),
+          }),
+        ),
+      );
+      setAddState("done");
+      setTimeout(() => navigate("/"), 1000);
+    });
   }
 
   return (

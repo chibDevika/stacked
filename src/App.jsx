@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -6,7 +6,6 @@ import {
   NavLink,
   useLocation,
   useNavigate,
-  Navigate,
 } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import Scan from "./pages/Scan.jsx";
@@ -18,10 +17,85 @@ import ScanProcessing from "./pages/ScanProcessing.jsx";
 import Auth from "./pages/Auth.jsx";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
 import { LibraryProvider } from "./contexts/LibraryContext.jsx";
+import { AuthWallProvider } from "./contexts/AuthWallContext.jsx";
+import GuestBanner from "./components/GuestBanner.jsx";
 
 function TopNav({ isDark, onToggleTheme }) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuMobile, setMenuMobile] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close dropdown on outside click (desktop)
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [menuOpen]);
+
+  function openMenu() {
+    setMenuMobile(window.innerWidth < 768);
+    setMenuOpen(true);
+  }
+
+  const displayName =
+    user?.user_metadata?.display_name || user?.user_metadata?.full_name;
+  const email = user?.email || "";
+  const avatarLetter = displayName
+    ? displayName[0].toUpperCase()
+    : email
+      ? email[0].toUpperCase()
+      : "?";
+
+  const menuContent = (
+    <>
+      <p
+        style={{
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: 11,
+          color: "var(--text-hint)",
+          padding: "8px 12px",
+          wordBreak: "break-all",
+          userSelect: "none",
+        }}
+      >
+        {email}
+      </p>
+      <div style={{ height: 1, background: "var(--border)" }} />
+      <button
+        type="button"
+        onClick={() => {
+          setMenuOpen(false);
+          signOut();
+        }}
+        style={{
+          display: "block",
+          width: "100%",
+          textAlign: "left",
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: 13,
+          color: "var(--text-primary)",
+          background: "none",
+          border: "none",
+          padding: "8px 12px",
+          cursor: "pointer",
+          borderRadius: 6,
+        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = "var(--surface-2)")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+      >
+        Sign out
+      </button>
+    </>
+  );
 
   return (
     <header
@@ -109,29 +183,87 @@ function TopNav({ isDark, onToggleTheme }) {
           </svg>
         </button>
 
-        {/* Sign out */}
+        {/* Avatar — logged-in users */}
         {user && (
-          <button
-            type="button"
-            onClick={signOut}
-            style={{ color: "var(--text-muted)", display: "flex" }}
-            title="Sign out"
-          >
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1.5"
+          <div ref={menuRef} style={{ position: "relative" }}>
+            <button
+              type="button"
+              onClick={openMenu}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                background: "var(--accent)",
+                color: "#fff",
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: 13,
+                fontWeight: 500,
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-              />
-            </svg>
-          </button>
+              {avatarLetter}
+            </button>
+
+            {menuOpen && (
+              <>
+                {/* Mobile backdrop */}
+                {menuMobile && (
+                  <div
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      background: "rgba(0,0,0,0.4)",
+                      zIndex: 90,
+                    }}
+                    onClick={() => setMenuOpen(false)}
+                  />
+                )}
+
+                {menuMobile ? (
+                  /* Mobile: bottom sheet */
+                  <div
+                    style={{
+                      position: "fixed",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: "var(--surface)",
+                      borderTop: "0.5px solid var(--border)",
+                      borderRadius: "16px 16px 0 0",
+                      padding: "16px 0 32px",
+                      zIndex: 91,
+                      animation: "slideUp 200ms ease both",
+                    }}
+                  >
+                    {menuContent}
+                  </div>
+                ) : (
+                  /* Desktop: dropdown */
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 8px)",
+                      right: 0,
+                      background: "var(--surface)",
+                      border: "0.5px solid var(--border)",
+                      borderRadius: 10,
+                      minWidth: 160,
+                      padding: 6,
+                      zIndex: 91,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                    }}
+                  >
+                    {menuContent}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         )}
       </div>
     </header>
@@ -271,32 +403,6 @@ function BottomNav() {
   );
 }
 
-function ProtectedRoute({ children }) {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "var(--bg)" }}
-      >
-        <p
-          style={{
-            fontFamily: '"DM Sans", sans-serif',
-            fontSize: 13,
-            color: "var(--text-hint)",
-          }}
-        >
-          Loading…
-        </p>
-      </div>
-    );
-  }
-
-  if (!user) return <Navigate to="/auth" replace />;
-  return children;
-}
-
 function AppShell() {
   const [isDark, setIsDark] = useState(
     () => localStorage.getItem("stacked_theme") === "dark",
@@ -331,37 +437,40 @@ function AppShell() {
   }
 
   return (
-    <div className="min-h-screen bg-app text-primary font-dm">
-      <ScrollToTop />
-      <Routes>
-        <Route path="/auth" element={<Auth />} />
-        <Route
-          path="/*"
-          element={
-            <ProtectedRoute>
-              <LibraryProvider>
-                <TopNav isDark={isDark} onToggleTheme={toggleTheme} />
-                <div className="pt-14 pb-20">
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/scan" element={<Scan />} />
-                    <Route
-                      path="/scan-processing"
-                      element={<ScanProcessing />}
-                    />
-                    <Route path="/book/:id" element={<BookDetail />} />
-                    <Route path="/author/:name" element={<Author />} />
-                    <Route path="/search" element={<Search />} />
-                    <Route path="/year" element={<ReadingYear />} />
-                  </Routes>
-                </div>
-                <BottomNav />
-              </LibraryProvider>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </div>
+    <AuthWallProvider>
+      <LibraryProvider>
+        <div className="min-h-screen bg-app text-primary font-dm">
+          <ScrollToTop />
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/*"
+              element={
+                <>
+                  <TopNav isDark={isDark} onToggleTheme={toggleTheme} />
+                  <div style={{ paddingTop: 56, paddingBottom: 60 }}>
+                    <GuestBanner />
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/scan" element={<Scan />} />
+                      <Route
+                        path="/scan-processing"
+                        element={<ScanProcessing />}
+                      />
+                      <Route path="/book/:id" element={<BookDetail />} />
+                      <Route path="/author/:name" element={<Author />} />
+                      <Route path="/search" element={<Search />} />
+                      <Route path="/year" element={<ReadingYear />} />
+                    </Routes>
+                  </div>
+                  <BottomNav />
+                </>
+              }
+            />
+          </Routes>
+        </div>
+      </LibraryProvider>
+    </AuthWallProvider>
   );
 }
 

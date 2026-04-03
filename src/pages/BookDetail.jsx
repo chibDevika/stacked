@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useLibrary } from "../contexts/LibraryContext.jsx";
+import { useAuthWall } from "../contexts/AuthWallContext.jsx";
 import { getAuthorBooks } from "../lib/googleBooks.js";
 import StatusToggle from "../components/StatusToggle.jsx";
 import BookCover from "../components/BookCover.jsx";
@@ -25,6 +26,7 @@ function formatNoteDate(isoString) {
 
 function MyReview({ bookId }) {
   const { getNote, setNote } = useLibrary();
+  const { requireAuth } = useAuthWall();
   const noteData = getNote(bookId);
   const [note, setNoteState] = useState(noteData?.text || "");
   const [addedAt] = useState(noteData?.addedAt || null);
@@ -73,14 +75,20 @@ function MyReview({ bookId }) {
           cursor: !note && !editing ? "text" : "default",
           transition: "border-color 0.15s",
         }}
-        onClick={!note && !editing ? () => setEditing(true) : undefined}
+        onClick={
+          !note && !editing
+            ? () => requireAuth(() => setEditing(true))
+            : undefined
+        }
       >
         {note && !editing && (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setDraft(note);
-              setEditing(true);
+              requireAuth(() => {
+                setDraft(note);
+                setEditing(true);
+              });
             }}
             style={{
               position: "absolute",
@@ -202,6 +210,7 @@ export default function BookDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { library, updateBookStatus, removeBook } = useLibrary();
+  const { requireAuth } = useAuthWall();
   const [book, setBook] = useState(null);
   const [authorBooks, setAuthorBooks] = useState([]);
   const [descExpanded, setDescExpanded] = useState(false);
@@ -231,12 +240,14 @@ export default function BookDetail() {
   }
 
   function handleStatusChange(status) {
-    updateBookStatus(id, status);
-    setBook((prev) => ({
-      ...prev,
-      status,
-      yearRead: status === "read" ? new Date().getFullYear() : prev.yearRead,
-    }));
+    requireAuth(() => {
+      updateBookStatus(id, status);
+      setBook((prev) => ({
+        ...prev,
+        status,
+        yearRead: status === "read" ? new Date().getFullYear() : prev.yearRead,
+      }));
+    });
   }
 
   if (!book) {

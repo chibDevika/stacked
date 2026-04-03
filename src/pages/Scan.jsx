@@ -1,21 +1,33 @@
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthWall } from "../contexts/AuthWallContext.jsx";
 
 export default function Scan() {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const { requireAuth } = useAuthWall();
 
   function handleFileChange(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
     e.target.value = "";
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target.result.split(",")[1];
-      const mimeType = file.type;
-      navigate("/scan-processing", { state: { base64, mimeType } });
-    };
-    reader.readAsDataURL(file);
+    Promise.all(
+      files.map(
+        (file) =>
+          new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              resolve({
+                base64: ev.target.result.split(",")[1],
+                mimeType: file.type,
+              });
+            };
+            reader.readAsDataURL(file);
+          }),
+      ),
+    ).then((images) => {
+      navigate("/scan-processing", { state: { images } });
+    });
   }
 
   return (
@@ -28,7 +40,7 @@ export default function Scan() {
         <div
           className="relative w-full cursor-pointer"
           style={{ maxWidth: 480, aspectRatio: "1 / 1" }}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => requireAuth(() => fileInputRef.current?.click())}
         >
           {/* Dashed border */}
           <div
@@ -65,10 +77,10 @@ export default function Scan() {
               />
             </svg>
             <h2 className="font-playfair text-primary text-xl font-medium text-center mb-1">
-              Photograph your shelf
+              Photograph or upload your shelf
             </h2>
             <p className="text-muted text-sm text-center">
-              Spines, covers, stacks — we'll figure it out
+              Take a photo or choose one from your gallery
             </p>
           </div>
 
@@ -76,7 +88,7 @@ export default function Scan() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
+            multiple
             className="absolute inset-0 w-full h-full opacity-0"
             style={{ pointerEvents: "none" }}
             onChange={handleFileChange}
@@ -86,7 +98,7 @@ export default function Scan() {
 
       <div className="pb-12 text-center">
         <p className="text-muted text-xs">
-          Point your camera at your bookshelf and tap to capture
+          Take a photo or choose from your camera roll
         </p>
       </div>
     </div>

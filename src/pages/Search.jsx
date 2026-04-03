@@ -14,6 +14,7 @@ import BookCover from "../components/BookCover.jsx";
 import AddBookModal from "../components/AddBookModal.jsx";
 import BookPreviewSheet from "../components/BookPreviewSheet.jsx";
 import { CoverFallback } from "../lib/covers.jsx";
+import { useAuthWall } from "../contexts/AuthWallContext.jsx";
 
 function DotRating({ rating }) {
   if (!rating) return null;
@@ -229,6 +230,7 @@ export default function Search() {
   const [searchParams] = useSearchParams();
   const initialQ = searchParams.get("q") || "";
   const { library, addBook } = useLibrary();
+  const { requireAuth } = useAuthWall();
 
   const [searchMode, setSearchMode] = useState(!!initialQ);
   const [query, setQuery] = useState(initialQ);
@@ -287,13 +289,15 @@ export default function Search() {
 
   function handleAdd(status) {
     if (!selected) return;
-    addBook({
-      ...selected,
-      status,
-      yearRead: status === "read" ? new Date().getFullYear() : null,
-      dateAdded: new Date().toISOString(),
+    requireAuth(() => {
+      addBook({
+        ...selected,
+        status,
+        yearRead: status === "read" ? new Date().getFullYear() : null,
+        dateAdded: new Date().toISOString(),
+      });
+      setSelected(null);
     });
-    setSelected(null);
   }
 
   function handleExploreRemoved(rec) {
@@ -311,23 +315,25 @@ export default function Search() {
 
   async function handleRegen() {
     if (regenLoading || regenCount >= 3) return;
-    setRegenLoading(true);
-    try {
-      const newCache = await regenerateRecs(library);
-      const newCount = incrementRegenCount(library);
-      setExploreData(newCache);
-      setRegenCount(newCount);
-      setTimeout(
-        () =>
-          gridRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          }),
-        100,
-      );
-    } finally {
-      setRegenLoading(false);
-    }
+    requireAuth(async () => {
+      setRegenLoading(true);
+      try {
+        const newCache = await regenerateRecs(library);
+        const newCount = incrementRegenCount(library);
+        setExploreData(newCache);
+        setRegenCount(newCount);
+        setTimeout(
+          () =>
+            gridRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            }),
+          100,
+        );
+      } finally {
+        setRegenLoading(false);
+      }
+    });
   }
 
   const exploreRecs = exploreData?.shown || [];
