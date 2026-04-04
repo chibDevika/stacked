@@ -59,12 +59,19 @@ export default function Auth() {
       className="min-h-screen flex flex-col items-center justify-center px-6"
       style={{ background: "var(--bg)" }}
     >
-      {/* Logo */}
-      <img
-        src="/logo.jpg"
-        alt="Stacked"
-        style={{ height: 80, width: 80, objectFit: "contain", marginBottom: 6 }}
-      />
+      {/* Wordmark */}
+      <p
+        className="font-playfair"
+        style={{
+          fontSize: 36,
+          fontWeight: 600,
+          color: "var(--brand)",
+          letterSpacing: "-0.01em",
+          marginBottom: 6,
+        }}
+      >
+        Stacked
+      </p>
       <p
         style={{
           fontFamily: '"DM Sans", sans-serif',
