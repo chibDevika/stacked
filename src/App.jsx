@@ -106,19 +106,18 @@ function TopNav({ isDark, onToggleTheme }) {
         borderBottom: "1px solid var(--border)",
       }}
     >
-      {/* Wordmark */}
-      <span
-        className="font-playfair cursor-pointer"
-        style={{
-          fontSize: 24,
-          fontWeight: 600,
-          color: "var(--brand)",
-          letterSpacing: "-0.01em",
-        }}
+      {/* Logo */}
+      <img
+        src="/logo.jpg"
+        alt="Stacked"
         onClick={() => navigate("/")}
-      >
-        Stacked
-      </span>
+        style={{
+          height: 40,
+          width: 40,
+          objectFit: "contain",
+          cursor: "pointer",
+        }}
+      />
 
       {/* Right actions */}
       <div className="flex items-center" style={{ gap: 16 }}>
